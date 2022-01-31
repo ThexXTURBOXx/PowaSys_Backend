@@ -1,6 +1,7 @@
 package de.femtopedia.powasysbackend.serial;
 
 import de.femtopedia.powasysbackend.api.DataEntry;
+import de.femtopedia.powasysbackend.api.SerialPort;
 import de.femtopedia.powasysbackend.sql.DatabaseStorage;
 import de.femtopedia.powasysbackend.util.Util;
 import java.io.BufferedReader;
@@ -21,17 +22,23 @@ public class SerialReader {
 
     private final List<Thread> threads = new ArrayList<>();
 
-    public void startListening(String serialPort) throws IOException {
-        startListening(Path.of(serialPort));
+    private volatile boolean running = true;
+
+    public void startListening(SerialPort serialPort) throws IOException {
+        startListening(serialPort.getPowadorId(), serialPort.getSerialPort());
     }
 
-    public void startListening(Path path) throws IOException {
-        startListening(Files.newBufferedReader(path));
+    public void startListening(int powadorId, String serialPort) throws IOException {
+        startListening(powadorId, Path.of(serialPort));
     }
 
-    public void startListening(BufferedReader reader) {
+    public void startListening(int powadorId, Path path) throws IOException {
+        startListening(powadorId, Files.newBufferedReader(path));
+    }
+
+    public void startListening(int powadorId, BufferedReader reader) {
         Thread thread = new Thread(() -> {
-            while (true) {
+            while (running) {
                 String line = null;
 
                 try {
@@ -44,7 +51,7 @@ public class SerialReader {
                     continue;
                 }
 
-                DataEntry entry = DataEntry.fromString(line.trim());
+                DataEntry entry = DataEntry.fromString(powadorId, line.trim());
                 if (entry == null) {
                     continue;
                 }
@@ -63,6 +70,16 @@ public class SerialReader {
     }
 
     public void shutdown() {
+        running = false;
+
+        threads.forEach(t -> {
+            try {
+                t.stop();
+                t.join();
+            } catch (InterruptedException e) {
+                e.printStackTrace();
+            }
+        });
     }
 
 }

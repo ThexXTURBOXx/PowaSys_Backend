@@ -1,5 +1,6 @@
 package de.femtopedia.powasysbackend;
 
+import de.femtopedia.powasysbackend.api.SerialPort;
 import de.femtopedia.powasysbackend.config.Config;
 import de.femtopedia.powasysbackend.rest.RestAPI;
 import de.femtopedia.powasysbackend.serial.SerialReader;
@@ -50,11 +51,11 @@ public final class Main {
             return false;
         }
 
-        restAPI = new RestAPI().start(config.getRestApiPort());
+        restAPI = new RestAPI(storage).start(config.getRestApiPort());
 
         serialReader = new SerialReader(storage);
 
-        for (String serialPort : config.getSerialPorts()) {
+        for (SerialPort serialPort : config.getSerialPorts()) {
             try {
                 serialReader.startListening(serialPort);
             } catch (IOException e) {
@@ -67,6 +68,12 @@ public final class Main {
     }
 
     private static void loop() {
+        while (true) {
+            try {
+                if (System.in.read() < 0) break;
+            } catch (IOException ignored) {
+            }
+        }
     }
 
     private static void shutdown() {

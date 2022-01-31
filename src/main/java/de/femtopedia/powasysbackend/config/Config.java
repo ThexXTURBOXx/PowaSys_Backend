@@ -1,6 +1,7 @@
 package de.femtopedia.powasysbackend.config;
 
 import de.femtopedia.mysql.MySQL;
+import de.femtopedia.powasysbackend.api.SerialPort;
 import de.femtopedia.powasysbackend.util.Util;
 import java.io.IOException;
 import java.nio.file.Files;
@@ -17,12 +18,12 @@ public class Config {
 
     private final int restApiPort;
 
-    private final List<String> serialPorts;
+    private final List<SerialPort> serialPorts;
 
     public Config() {
         this(new MySQL("<hostname>", "<port>", "<database>", "<username>", "<password>"),
                 80,
-                List.of("/dev/ttyUSB0"));
+                List.of(new SerialPort(1, "/dev/ttyUSB0")));
     }
 
     public static Config readOrInit(Path jsonFile) throws IOException {
