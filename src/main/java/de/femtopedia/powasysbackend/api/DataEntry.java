@@ -1,6 +1,5 @@
 package de.femtopedia.powasysbackend.api;
 
-import de.femtopedia.powasysbackend.sql.DatabaseStorage;
 import de.femtopedia.powasysbackend.util.Util;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
@@ -76,10 +75,6 @@ public class DataEntry {
                 netPower,
                 temperature
         );
-    }
-
-    public void insertIntoDatabase(DatabaseStorage storage) throws SQLException {
-        storage.insert(this);
     }
 
     public void toStmt(int startIndex, PreparedStatement stmt) throws SQLException {

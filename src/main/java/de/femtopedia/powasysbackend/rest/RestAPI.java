@@ -1,6 +1,6 @@
 package de.femtopedia.powasysbackend.rest;
 
-import de.femtopedia.powasysbackend.sql.DatabaseStorage;
+import de.femtopedia.powasysbackend.api.Storage;
 import de.femtopedia.powasysbackend.util.Util;
 import io.javalin.Javalin;
 import java.util.Map;
@@ -9,7 +9,7 @@ import lombok.RequiredArgsConstructor;
 
 @Data
 @RequiredArgsConstructor
-public class RestAPI {
+public class RestAPI implements AutoCloseable {
 
     private static final Map<String, String> endpoints = Map.ofEntries(
             Map.entry("GET /discovery", "Shows this page, which contains information about all available endpoints."),
@@ -18,9 +18,9 @@ public class RestAPI {
 
     private final Javalin javalin;
 
-    private final DatabaseStorage storage;
+    private final Storage storage;
 
-    public RestAPI(DatabaseStorage storage) {
+    public RestAPI(Storage storage) {
         this(Javalin.create()
                         .get("/discovery", ctx -> ctx.result(Util.GSON.toJson(endpoints)))
                         .get("/get/{id}", ctx -> ctx.result(Util.GSON.toJson(
@@ -44,7 +44,8 @@ public class RestAPI {
         return this;
     }
 
-    public void shutdown() {
+    @Override
+    public void close() {
         javalin.close();
     }
 

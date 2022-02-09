@@ -3,6 +3,7 @@ package de.femtopedia.powasysbackend.config;
 import de.femtopedia.mysql.MySQL;
 import de.femtopedia.powasysbackend.api.SerialPort;
 import de.femtopedia.powasysbackend.util.Util;
+import java.io.BufferedReader;
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
@@ -33,7 +34,9 @@ public class Config {
             return null;
         }
 
-        return Util.GSON.fromJson(Files.newBufferedReader(jsonFile), Config.class);
+        try (BufferedReader br = Files.newBufferedReader(jsonFile)) {
+            return Util.GSON.fromJson(br, Config.class);
+        }
     }
 
 }

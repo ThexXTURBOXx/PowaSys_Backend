@@ -2,13 +2,12 @@ package de.femtopedia.powasysbackend.serial;
 
 import de.femtopedia.powasysbackend.api.DataEntry;
 import de.femtopedia.powasysbackend.api.SerialPort;
-import de.femtopedia.powasysbackend.sql.DatabaseStorage;
+import de.femtopedia.powasysbackend.api.Storage;
 import de.femtopedia.powasysbackend.util.Util;
 import java.io.BufferedReader;
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
-import java.sql.SQLException;
 import java.util.ArrayList;
 import java.util.List;
 import lombok.Data;
@@ -18,7 +17,7 @@ import lombok.RequiredArgsConstructor;
 @RequiredArgsConstructor
 public class SerialReader {
 
-    private final DatabaseStorage storage;
+    private final Storage storage;
 
     private final List<Thread> threads = new ArrayList<>();
 
@@ -57,8 +56,8 @@ public class SerialReader {
                 }
 
                 try {
-                    entry.insertIntoDatabase(storage);
-                } catch (SQLException e) {
+                    storage.store(entry);
+                } catch (Exception e) {
                     e.printStackTrace();
                 }
             }
@@ -69,7 +68,7 @@ public class SerialReader {
         threads.add(thread);
     }
 
-    public void shutdown() {
+    public void close() {
         running = false;
 
         threads.forEach(t -> {

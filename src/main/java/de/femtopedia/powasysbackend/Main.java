@@ -1,6 +1,7 @@
 package de.femtopedia.powasysbackend;
 
 import de.femtopedia.powasysbackend.api.SerialPort;
+import de.femtopedia.powasysbackend.api.Storage;
 import de.femtopedia.powasysbackend.config.Config;
 import de.femtopedia.powasysbackend.rest.RestAPI;
 import de.femtopedia.powasysbackend.serial.SerialReader;
@@ -13,7 +14,7 @@ public final class Main {
 
     private static Config config;
 
-    private static DatabaseStorage storage;
+    private static Storage storage;
 
     private static RestAPI restAPI;
 
@@ -78,17 +79,25 @@ public final class Main {
 
     private static void shutdown() {
         if (serialReader != null) {
-            serialReader.shutdown();
+            try {
+                serialReader.close();
+            } catch (Exception e) {
+                e.printStackTrace();
+            }
         }
 
         if (restAPI != null) {
-            restAPI.shutdown();
+            try {
+                restAPI.close();
+            } catch (Exception e) {
+                e.printStackTrace();
+            }
         }
 
         if (storage != null) {
             try {
-                storage.shutdown();
-            } catch (SQLException e) {
+                storage.close();
+            } catch (Exception e) {
                 e.printStackTrace();
             }
         }
