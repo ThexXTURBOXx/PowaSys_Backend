@@ -8,24 +8,28 @@ import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.util.ArrayList;
+import java.util.Deque;
+import java.util.LinkedList;
 import java.util.List;
 import lombok.Data;
 import lombok.RequiredArgsConstructor;
 
 @Data
 @RequiredArgsConstructor
-public class DatabaseStorage implements Storage {
+public class MySQLStorage implements Storage {
 
     private final MySQL mySQL;
 
     private final SQLConnection connection;
 
-    public DatabaseStorage(String hostname, String port, String database, String username, String password)
+    private final Deque<DataEntry> toStore = new LinkedList<>();
+
+    public MySQLStorage(String hostname, String port, String database, String username, String password)
             throws SQLException, ClassNotFoundException {
         this(new MySQL(hostname, port, database, username, password));
     }
 
-    public DatabaseStorage(MySQL mySQL) throws SQLException, ClassNotFoundException {
+    public MySQLStorage(MySQL mySQL) throws SQLException, ClassNotFoundException {
         this(mySQL, mySQL.openConnection());
     }
 
@@ -62,9 +66,19 @@ public class DatabaseStorage implements Storage {
 
     @Override
     public void store(DataEntry dataEntry) throws SQLException {
-        try (PreparedStatement stmt = insertStmt()) {
-            dataEntry.toStmt(1, stmt);
-            stmt.executeUpdate();
+        toStore.offer(dataEntry);
+        applyChanges();
+    }
+
+    @Override
+    public void applyChanges() throws SQLException {
+        while (!toStore.isEmpty()) {
+            DataEntry dataEntry = toStore.peek();
+            try (PreparedStatement stmt = insertStmt()) {
+                dataEntry.toStmt(1, stmt);
+                stmt.executeUpdate();
+                toStore.poll();
+            }
         }
     }
 

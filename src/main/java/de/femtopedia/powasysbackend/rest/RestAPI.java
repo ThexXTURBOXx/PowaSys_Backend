@@ -13,7 +13,8 @@ public class RestAPI implements AutoCloseable {
 
     private static final Map<String, String> endpoints = Map.ofEntries(
             Map.entry("GET /discovery", "Shows this page, which contains information about all available endpoints."),
-            Map.entry("GET /get/{id}", "Returns the entry with the given {id} from the database.")
+            Map.entry("GET /get/{id}", "Returns the entry with the given {id} from the database."),
+            Map.entry("GET /24h", "Returns all entries from within the last 24 hours from the database.")
     );
 
     private final Javalin javalin;

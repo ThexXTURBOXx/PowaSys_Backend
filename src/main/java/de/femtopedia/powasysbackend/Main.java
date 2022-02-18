@@ -5,7 +5,7 @@ import de.femtopedia.powasysbackend.api.Storage;
 import de.femtopedia.powasysbackend.config.Config;
 import de.femtopedia.powasysbackend.rest.RestAPI;
 import de.femtopedia.powasysbackend.serial.SerialReader;
-import de.femtopedia.powasysbackend.sql.DatabaseStorage;
+import de.femtopedia.powasysbackend.sql.MySQLStorage;
 import java.io.IOException;
 import java.nio.file.Path;
 import java.sql.SQLException;
@@ -46,7 +46,7 @@ public final class Main {
         }
 
         try {
-            storage = new DatabaseStorage(config.getMySQL());
+            storage = new MySQLStorage(config.getMySQL());
         } catch (SQLException | ClassNotFoundException e) {
             e.printStackTrace();
             return false;

@@ -10,4 +10,6 @@ public interface Storage extends AutoCloseable {
 
     void store(DataEntry dataEntry) throws Exception;
 
+    void applyChanges() throws Exception;
+
 }
