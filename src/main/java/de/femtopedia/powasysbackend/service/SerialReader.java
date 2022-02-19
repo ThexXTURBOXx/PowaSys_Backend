@@ -1,8 +1,9 @@
-package de.femtopedia.powasysbackend.serial;
+package de.femtopedia.powasysbackend.service;
 
 import de.femtopedia.powasysbackend.api.DataEntry;
 import de.femtopedia.powasysbackend.api.SerialPort;
 import de.femtopedia.powasysbackend.api.Storage;
+import de.femtopedia.powasysbackend.util.Logger;
 import de.femtopedia.powasysbackend.util.Util;
 import java.io.BufferedReader;
 import java.io.IOException;
@@ -16,6 +17,8 @@ import lombok.RequiredArgsConstructor;
 @Data
 @RequiredArgsConstructor
 public class SerialReader {
+
+    private static final Logger LOGGER = Logger.forClass(SerialReader.class);
 
     private final Storage storage;
 
@@ -43,7 +46,7 @@ public class SerialReader {
                 try {
                     line = reader.readLine();
                 } catch (IOException e) {
-                    e.printStackTrace();
+                    LOGGER.error("Error when reading serial port", e);
                 }
 
                 if (Util.isBlank(line)) {
@@ -58,7 +61,7 @@ public class SerialReader {
                 try {
                     storage.store(entry);
                 } catch (Exception e) {
-                    e.printStackTrace();
+                    LOGGER.error("Error when storing data", e);
                 }
             }
         });
@@ -76,7 +79,7 @@ public class SerialReader {
                 t.stop();
                 t.join();
             } catch (InterruptedException e) {
-                e.printStackTrace();
+                LOGGER.error("Error when stopping serial reader", e);
             }
         });
     }

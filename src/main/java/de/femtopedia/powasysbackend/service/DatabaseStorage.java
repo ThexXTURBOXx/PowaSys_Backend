@@ -1,11 +1,12 @@
-package de.femtopedia.powasysbackend.sql;
+package de.femtopedia.powasysbackend.service;
 
 import de.femtopedia.database.api.Database;
 import de.femtopedia.database.api.SQLConnection;
 import de.femtopedia.database.mysql.MySQL;
 import de.femtopedia.database.sqlite.SQLite;
+import de.femtopedia.powasysbackend.api.CachedStorage;
 import de.femtopedia.powasysbackend.api.DataEntry;
-import de.femtopedia.powasysbackend.api.Storage;
+import de.femtopedia.powasysbackend.util.Logger;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
@@ -13,18 +14,35 @@ import java.util.ArrayList;
 import java.util.Deque;
 import java.util.LinkedList;
 import java.util.List;
+import java.util.Timer;
+import java.util.TimerTask;
 import lombok.Data;
 import lombok.RequiredArgsConstructor;
 
 @Data
 @RequiredArgsConstructor
-public class DatabaseStorage implements Storage {
+public class DatabaseStorage implements CachedStorage {
+
+    private static final Logger LOGGER = Logger.forClass(DatabaseStorage.class);
 
     private final Database database;
 
     private final SQLConnection connection;
 
-    private final Deque<DataEntry> toStore = new LinkedList<>();
+    private final Deque<DataEntry> queue = new LinkedList<>();
+
+    private final Timer timer = new Timer();
+
+    private final TimerTask applyTask = new TimerTask() {
+        @Override
+        public void run() {
+            applyChanges();
+        }
+    };
+
+    {
+        timer.schedule(applyTask, 10000, 10000);
+    }
 
     public DatabaseStorage(String dbLocation) throws SQLException, ClassNotFoundException {
         this(new SQLite(dbLocation));
@@ -71,21 +89,27 @@ public class DatabaseStorage implements Storage {
     }
 
     @Override
-    public void store(DataEntry dataEntry) throws SQLException {
-        toStore.offer(dataEntry);
-        applyChanges();
+    public void store(DataEntry dataEntry) {
+        queue.offer(dataEntry);
     }
 
     @Override
-    public void applyChanges() throws SQLException {
-        while (!toStore.isEmpty()) {
-            DataEntry dataEntry = toStore.peek();
+    public void applyChanges() {
+        while (!queue.isEmpty()) {
+            DataEntry dataEntry = queue.peek();
             try (PreparedStatement stmt = insertStmt()) {
                 dataEntry.toStmt(stmt, 1);
                 stmt.executeUpdate();
-                toStore.poll();
+                queue.poll();
+            } catch (SQLException e) {
+                LOGGER.error("Error when applying changes", e);
             }
         }
+    }
+
+    @Override
+    public void clearQueue() {
+        queue.clear();
     }
 
     private PreparedStatement getStmt() throws SQLException {
@@ -106,6 +130,8 @@ public class DatabaseStorage implements Storage {
     @Override
     public void close() throws SQLException {
         database.closeConnection();
+        applyTask.cancel();
+        timer.cancel();
     }
 
 }

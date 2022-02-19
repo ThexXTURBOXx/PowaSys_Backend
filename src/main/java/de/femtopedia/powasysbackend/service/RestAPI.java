@@ -1,4 +1,4 @@
-package de.femtopedia.powasysbackend.rest;
+package de.femtopedia.powasysbackend.service;
 
 import de.femtopedia.powasysbackend.api.Storage;
 import de.femtopedia.powasysbackend.util.Util;

@@ -1,8 +1,7 @@
-package de.femtopedia.powasysbackend.config;
+package de.femtopedia.powasysbackend.util;
 
 import de.femtopedia.database.mysql.MySQL;
 import de.femtopedia.powasysbackend.api.SerialPort;
-import de.femtopedia.powasysbackend.util.Util;
 import java.io.BufferedReader;
 import java.io.IOException;
 import java.nio.file.Files;
