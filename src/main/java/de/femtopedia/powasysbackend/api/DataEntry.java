@@ -1,5 +1,6 @@
 package de.femtopedia.powasysbackend.api;
 
+import de.femtopedia.database.api.StatementParametrizer;
 import de.femtopedia.powasysbackend.util.Util;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
@@ -77,16 +78,17 @@ public class DataEntry {
         );
     }
 
-    public void toStmt(int startIndex, PreparedStatement stmt) throws SQLException {
-        stmt.setInt(startIndex, powadorId);
-        stmt.setInt(++startIndex, state);
-        stmt.setDouble(++startIndex, genVoltage);
-        stmt.setDouble(++startIndex, genCurrent);
-        stmt.setInt(++startIndex, genPower);
-        stmt.setDouble(++startIndex, netVoltage);
-        stmt.setDouble(++startIndex, netCurrent);
-        stmt.setInt(++startIndex, netPower);
-        stmt.setInt(++startIndex, temperature);
+    public void toStmt(PreparedStatement stmt, int startIndex) throws SQLException {
+        new StatementParametrizer(stmt, startIndex)
+                .integer(powadorId)
+                .integer(state)
+                .doublePrec(genVoltage)
+                .doublePrec(genCurrent)
+                .integer(genPower)
+                .doublePrec(netVoltage)
+                .doublePrec(netCurrent)
+                .integer(netPower)
+                .integer(temperature);
     }
 
 }

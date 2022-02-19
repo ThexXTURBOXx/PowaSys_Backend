@@ -1,7 +1,9 @@
 package de.femtopedia.powasysbackend.sql;
 
-import de.femtopedia.mysql.MySQL;
-import de.femtopedia.mysql.SQLConnection;
+import de.femtopedia.database.api.Database;
+import de.femtopedia.database.api.SQLConnection;
+import de.femtopedia.database.mysql.MySQL;
+import de.femtopedia.database.sqlite.SQLite;
 import de.femtopedia.powasysbackend.api.DataEntry;
 import de.femtopedia.powasysbackend.api.Storage;
 import java.sql.PreparedStatement;
@@ -16,21 +18,25 @@ import lombok.RequiredArgsConstructor;
 
 @Data
 @RequiredArgsConstructor
-public class MySQLStorage implements Storage {
+public class DatabaseStorage implements Storage {
 
-    private final MySQL mySQL;
+    private final Database database;
 
     private final SQLConnection connection;
 
     private final Deque<DataEntry> toStore = new LinkedList<>();
 
-    public MySQLStorage(String hostname, String port, String database, String username, String password)
+    public DatabaseStorage(String dbLocation) throws SQLException, ClassNotFoundException {
+        this(new SQLite(dbLocation));
+    }
+
+    public DatabaseStorage(String hostname, String port, String database, String username, String password)
             throws SQLException, ClassNotFoundException {
         this(new MySQL(hostname, port, database, username, password));
     }
 
-    public MySQLStorage(MySQL mySQL) throws SQLException, ClassNotFoundException {
-        this(mySQL, mySQL.openConnection());
+    public DatabaseStorage(Database database) throws SQLException, ClassNotFoundException {
+        this(database, database.openConnection());
     }
 
     @Override
@@ -75,7 +81,7 @@ public class MySQLStorage implements Storage {
         while (!toStore.isEmpty()) {
             DataEntry dataEntry = toStore.peek();
             try (PreparedStatement stmt = insertStmt()) {
-                dataEntry.toStmt(1, stmt);
+                dataEntry.toStmt(stmt, 1);
                 stmt.executeUpdate();
                 toStore.poll();
             }
@@ -83,23 +89,23 @@ public class MySQLStorage implements Storage {
     }
 
     private PreparedStatement getStmt() throws SQLException {
-        return connection.prepareStatement("SELECT * FROM entries WHERE id = ?;");
+        return database.prepareStatement("SELECT * FROM entries WHERE id = ?;");
     }
 
     private PreparedStatement getLast24hStmt() throws SQLException {
-        return connection.prepareStatement("SELECT * FROM entries "
+        return database.prepareStatement("SELECT * FROM entries "
                 + "WHERE time > DATE_SUB(NOW(), INTERVAL 24 HOUR)");
     }
 
     private PreparedStatement insertStmt() throws SQLException {
-        return connection.prepareStatement("INSERT INTO entries("
+        return database.prepareStatement("INSERT INTO entries("
                 + "powadorId,state,genVoltage,genCurrent,genPower,netVoltage,netCurrent,netPower,temperature) "
                 + "VALUES(?,?,?,?,?,?,?,?,?);");
     }
 
     @Override
     public void close() throws SQLException {
-        mySQL.closeConnection();
+        database.closeConnection();
     }
 
 }
