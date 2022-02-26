@@ -4,14 +4,16 @@ import de.femtopedia.database.api.Database;
 import de.femtopedia.database.api.SQLConnection;
 import de.femtopedia.database.mysql.MySQL;
 import de.femtopedia.database.sqlite.SQLite;
+import de.femtopedia.powasysbackend.api.CachedEntry;
 import de.femtopedia.powasysbackend.api.CachedStorage;
 import de.femtopedia.powasysbackend.api.DataEntry;
 import de.femtopedia.powasysbackend.util.Logger;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
+import java.time.OffsetDateTime;
 import java.util.ArrayList;
-import java.util.Deque;
+import java.util.Iterator;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Timer;
@@ -29,7 +31,7 @@ public class DatabaseStorage implements CachedStorage {
 
     private final SQLConnection connection;
 
-    private final Deque<DataEntry> queue = new LinkedList<>();
+    private final List<CachedEntry> queue = new LinkedList<>();
 
     private final Timer timer = new Timer();
 
@@ -59,6 +61,8 @@ public class DatabaseStorage implements CachedStorage {
 
     @Override
     public DataEntry getEntry(int id) throws SQLException {
+        checkConnection();
+
         try (PreparedStatement stmt = getStmt()) {
             stmt.setInt(1, id);
 
@@ -75,8 +79,9 @@ public class DatabaseStorage implements CachedStorage {
 
     @Override
     public List<DataEntry> getLast24h() throws SQLException {
-        List<DataEntry> dataEntries = new ArrayList<>();
+        checkConnection();
 
+        List<DataEntry> dataEntries = new ArrayList<>();
         try (PreparedStatement stmt = getLast24hStmt()) {
             ResultSet rs = stmt.executeQuery();
 
@@ -84,32 +89,55 @@ public class DatabaseStorage implements CachedStorage {
                 dataEntries.add(DataEntry.fromResultSet(rs));
             }
         }
-
         return dataEntries;
     }
 
     @Override
     public void store(DataEntry dataEntry) {
-        queue.offer(dataEntry);
+        queue.add(new CachedEntry(OffsetDateTime.now(), dataEntry));
     }
 
     @Override
     public void applyChanges() {
-        while (!queue.isEmpty()) {
-            DataEntry dataEntry = queue.peek();
+        try {
+            checkConnection();
+        } catch (SQLException e) {
+            LOGGER.error("Could not re-establish connection", e);
+            return;
+        }
+
+        List<SQLException> errors = new ArrayList<>();
+        Iterator<CachedEntry> iterator = queue.iterator();
+        while (iterator.hasNext()) {
+            CachedEntry entry = iterator.next();
             try (PreparedStatement stmt = insertStmt()) {
-                dataEntry.toStmt(stmt, 1);
+                entry.toStmt(stmt, 1);
                 stmt.executeUpdate();
-                queue.poll();
+                iterator.remove();
             } catch (SQLException e) {
-                LOGGER.error("Error when applying changes", e);
+                if (errors.stream().noneMatch(
+                        ex -> ex.getErrorCode() == e.getErrorCode() && ex.getSQLState().equals(e.getSQLState()))) {
+                    errors.add(e);
+                }
             }
         }
+
+        errors.forEach(e -> LOGGER.error("Error when applying changes", e));
     }
 
     @Override
     public void clearQueue() {
         queue.clear();
+    }
+
+    private void checkConnection() throws SQLException {
+        if (!database.isConnected()) {
+            try {
+                database.openConnection();
+            } catch (ClassNotFoundException ignored) {
+                // Should not happen as this has been checked at start already
+            }
+        }
     }
 
     private PreparedStatement getStmt() throws SQLException {
@@ -123,8 +151,8 @@ public class DatabaseStorage implements CachedStorage {
 
     private PreparedStatement insertStmt() throws SQLException {
         return database.prepareStatement("INSERT INTO entries("
-                + "powadorId,state,genVoltage,genCurrent,genPower,netVoltage,netCurrent,netPower,temperature) "
-                + "VALUES(?,?,?,?,?,?,?,?,?);");
+                + "time,powadorId,state,genVoltage,genCurrent,genPower,netVoltage,netCurrent,netPower,temperature) "
+                + "VALUES(DATE_SUB(NOW(), INTERVAL ? DAY_SECOND),?,?,?,?,?,?,?,?,?);");
     }
 
     @Override

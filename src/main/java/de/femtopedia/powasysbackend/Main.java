@@ -16,6 +16,10 @@ import java.sql.SQLException;
 
 public final class Main {
 
+    public static final String VERSION = Main.class.getPackage().getImplementationVersion();
+
+    public static final boolean IS_DEV_ENV = VERSION == null;
+
     private static final Logger LOGGER = Logger.forClass(Main.class);
 
     private static Config config;

@@ -1,6 +1,8 @@
 package de.femtopedia.powasysbackend.service;
 
+import de.femtopedia.powasysbackend.Main;
 import de.femtopedia.powasysbackend.api.CachedStorage;
+import de.femtopedia.powasysbackend.api.DataEntry;
 import java.io.BufferedReader;
 import java.io.IOException;
 import java.util.Locale;
@@ -50,6 +52,10 @@ public class REPL {
      */
     private boolean execute(String input) {
         switch (input) {
+        case "a":
+        case "add":
+            addDebugData();
+            break;
         case "c":
         case "clear":
             clearQueue();
@@ -70,6 +76,22 @@ public class REPL {
             break;
         }
         return false;
+    }
+
+    /**
+     * Stores debug data in the database.
+     */
+    public void addDebugData() {
+        if (!Main.IS_DEV_ENV) {
+            System.err.println(ERR_ONLY_DEV_CMD);
+            return;
+        }
+
+        try {
+            storage.store(new DataEntry(3, "", "", 4, 45.3, 54.2, 43, 54.6, 89.5, 10, 36));
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
     }
 
     /**
@@ -98,6 +120,8 @@ public class REPL {
 
     private static final String ERR_CMD_NOT_EXISTS = "Command doesn't exist! "
             + "For more info, type HELP.";
+
+    private static final String ERR_ONLY_DEV_CMD = "This command is only available in a Dev Environment!";
 
     private static final String INFO_HELP_TEXT = ""
             + "HELP      Prints this text.%n"
