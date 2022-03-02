@@ -64,7 +64,7 @@ public final class Main {
             return false;
         }
 
-        restAPI = new RestAPI(storage).start(config.getRestApiPort());
+        restAPI = new RestAPI(storage, config.getPowadors()).start(config.getRestApiPort());
 
         serialReader = new SerialReader(storage);
 
