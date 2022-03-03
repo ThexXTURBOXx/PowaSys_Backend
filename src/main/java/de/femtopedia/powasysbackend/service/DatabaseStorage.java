@@ -10,6 +10,8 @@ import de.femtopedia.powasysbackend.api.CachedStorage;
 import de.femtopedia.powasysbackend.api.DataEntries;
 import de.femtopedia.powasysbackend.api.DataEntry;
 import de.femtopedia.powasysbackend.util.Logger;
+import de.femtopedia.powasysbackend.util.Util;
+import java.io.Reader;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
@@ -17,12 +19,11 @@ import java.time.OffsetDateTime;
 import java.util.ArrayList;
 import java.util.Comparator;
 import java.util.HashMap;
-import java.util.Iterator;
-import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
 import java.util.Timer;
 import java.util.TimerTask;
+import java.util.concurrent.CopyOnWriteArrayList;
 import java.util.stream.Collectors;
 import lombok.Data;
 import lombok.RequiredArgsConstructor;
@@ -37,8 +38,6 @@ public class DatabaseStorage implements CachedStorage {
 
     private final SQLConnection connection;
 
-    private final List<CachedEntry> queue = new LinkedList<>();
-
     private final Timer timer = new Timer();
 
     private final TimerTask applyTask = new TimerTask() {
@@ -51,6 +50,8 @@ public class DatabaseStorage implements CachedStorage {
     {
         timer.schedule(applyTask, 10000, 10000);
     }
+
+    private List<CachedEntry> queue = new CopyOnWriteArrayList<>();
 
     public DatabaseStorage(String dbLocation) throws SQLException, ClassNotFoundException {
         this(new SQLite(dbLocation));
@@ -131,13 +132,11 @@ public class DatabaseStorage implements CachedStorage {
         }
 
         List<SQLException> errors = new ArrayList<>();
-        Iterator<CachedEntry> iterator = queue.iterator();
-        while (iterator.hasNext()) {
-            CachedEntry entry = iterator.next();
+        for (CachedEntry entry : queue) {
             try (PreparedStatement stmt = insertStmt()) {
                 entry.toStmt(stmt, 1);
                 stmt.executeUpdate();
-                iterator.remove();
+                queue.remove(entry);
             } catch (SQLException e) {
                 if (errors.stream().noneMatch(
                         ex -> ex.getErrorCode() == e.getErrorCode() && ex.getSQLState().equals(e.getSQLState()))) {
@@ -186,6 +185,19 @@ public class DatabaseStorage implements CachedStorage {
         return database.prepareStatement("INSERT INTO entries("
                 + "time,powadorId,state,genVoltage,genCurrent,genPower,netVoltage,netCurrent,netPower,temperature) "
                 + "VALUES(DATE_SUB(NOW(), INTERVAL ? DAY_SECOND),?,?,?,?,?,?,?,?,?);");
+    }
+
+    @Override
+    public void loadQueue(Reader reader) {
+        List<CachedEntry> queue = Util.GSON.fromJson(reader, CachedEntry.CACHED_ENTRY_LIST_TYPE);
+        if (queue != null) {
+            this.queue = new CopyOnWriteArrayList<>(queue);
+        }
+    }
+
+    @Override
+    public void dumpQueue(Appendable writer) {
+        Util.GSON.toJson(queue, writer);
     }
 
     @Override

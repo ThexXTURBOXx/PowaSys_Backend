@@ -1,5 +1,6 @@
 package de.femtopedia.powasysbackend.api;
 
+import java.io.Reader;
 import java.util.List;
 
 public interface CachedStorage extends Storage {
@@ -9,5 +10,9 @@ public interface CachedStorage extends Storage {
     List<CachedEntry> getQueue();
 
     void clearQueue();
+
+    void loadQueue(Reader reader);
+
+    void dumpQueue(Appendable writer);
 
 }
