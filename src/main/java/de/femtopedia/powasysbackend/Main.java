@@ -9,10 +9,8 @@ import de.femtopedia.powasysbackend.service.SerialReader;
 import de.femtopedia.powasysbackend.util.Config;
 import de.femtopedia.powasysbackend.util.Logger;
 import java.io.BufferedReader;
-import java.io.BufferedWriter;
 import java.io.IOException;
 import java.io.InputStreamReader;
-import java.nio.file.Files;
 import java.nio.file.Path;
 import java.sql.SQLException;
 
@@ -23,8 +21,6 @@ public final class Main {
     public static final boolean IS_DEV_ENV = VERSION == null;
 
     private static final Logger LOGGER = Logger.forClass(Main.class);
-
-    private static final Path QUEUE_FILE = Path.of("queue.json");
 
     private static Config config;
 
@@ -68,17 +64,8 @@ public final class Main {
             return false;
         }
 
-        if (!Files.isRegularFile(QUEUE_FILE)) {
-            try {
-                Files.createFile(QUEUE_FILE);
-            } catch (IOException e) {
-                LOGGER.error("Error creating queue file", e);
-                return false;
-            }
-        }
-
-        try (BufferedReader br = Files.newBufferedReader(QUEUE_FILE)) {
-            storage.loadQueue(br);
+        try {
+            storage.loadQueue();
         } catch (IOException e) {
             LOGGER.error("Error reading queue file", e);
         }
@@ -134,8 +121,8 @@ public final class Main {
                 LOGGER.error("Error shutting down storage", e);
             }
 
-            try (BufferedWriter bw = Files.newBufferedWriter(QUEUE_FILE)) {
-                storage.dumpQueue(bw);
+            try {
+                storage.dumpQueue();
             } catch (IOException e) {
                 LOGGER.error("Error dumping queue", e);
             }

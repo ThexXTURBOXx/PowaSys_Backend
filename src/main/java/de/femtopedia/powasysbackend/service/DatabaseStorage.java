@@ -11,6 +11,7 @@ import de.femtopedia.powasysbackend.api.DataEntries;
 import de.femtopedia.powasysbackend.api.DataEntry;
 import de.femtopedia.powasysbackend.util.Logger;
 import de.femtopedia.powasysbackend.util.Util;
+import java.io.IOException;
 import java.io.Reader;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
@@ -146,6 +147,12 @@ public class DatabaseStorage implements CachedStorage {
         }
 
         errors.forEach(e -> LOGGER.error("Error when applying changes", e));
+
+        try {
+            dumpQueue();
+        } catch (IOException e) {
+            LOGGER.error("Error dumping queue", e);
+        }
     }
 
     @Override
