@@ -33,7 +33,9 @@ public class RestAPI implements AutoCloseable {
                         .get("/powas", ctx -> ctx.result(Util.GSON.toJson(powadors)))
                         .get("/get/{id}", ctx -> ctx.result(Util.GSON.toJson(
                                 storage.getEntry(ctx.pathParamAsClass("id", Integer.class).get()))))
-                        .get("/24h", ctx -> ctx.result(Util.GSON.toJson(storage.getLast24h()))),
+                        .get("/24h", ctx -> ctx.result(Util.GSON.toJson(storage.getLast24h(
+                                ctx.queryParamAsClass("minDiv", Double.class).getOrDefault(0.0)
+                        )))),
                 storage, powadors);
     }
 

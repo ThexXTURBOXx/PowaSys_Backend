@@ -2,6 +2,7 @@ package de.femtopedia.powasysbackend.service;
 
 import de.femtopedia.database.api.Database;
 import de.femtopedia.database.api.SQLConnection;
+import de.femtopedia.database.api.StatementParametrizer;
 import de.femtopedia.database.mysql.MySQL;
 import de.femtopedia.database.sqlite.SQLite;
 import de.femtopedia.powasysbackend.api.AverageEntry;
@@ -86,13 +87,18 @@ public class DatabaseStorage implements CachedStorage {
     }
 
     @Override
-    public DataEntries getLast24h() throws SQLException {
+    public DataEntries getLast24h(double minDiv) throws SQLException {
         checkConnection();
 
+        boolean showAll = minDiv <= 0;
         Map<Integer, DataEntry> current = new HashMap<>();
         List<DataEntry> dataEntries = new ArrayList<>();
-        try (PreparedStatement stmt = getLast24hStmt()) {
-            ResultSet rs = stmt.executeQuery();
+        try (PreparedStatement stmt = getLast24hStmt(showAll)) {
+            StatementParametrizer parametrizer = new StatementParametrizer(stmt);
+            if (!showAll) {
+                parametrizer.doublePrec(minDiv);
+            }
+            ResultSet rs = parametrizer.toStatement().executeQuery();
 
             while (rs.next()) {
                 DataEntry currentEntry = DataEntry.fromResultSet(rs);
@@ -174,9 +180,11 @@ public class DatabaseStorage implements CachedStorage {
         return database.prepareStatement("SELECT * FROM entries WHERE id = ? ORDER BY time;");
     }
 
-    private PreparedStatement getLast24hStmt() throws SQLException {
+    private PreparedStatement getLast24hStmt(boolean showAll) throws SQLException {
         return database.prepareStatement("SELECT * FROM entries "
-                + "WHERE time > DATE_SUB(NOW(), INTERVAL 24 HOUR) ORDER BY time;");
+                + "WHERE time > DATE_SUB(NOW(), INTERVAL 24 HOUR) "
+                + (showAll ? "" : "GROUP BY powadorId, DATE(time), HOUR(time), FLOOR(MINUTE(time)/?) ")
+                + "ORDER BY time;");
     }
 
     private PreparedStatement average24hStatement() throws SQLException {
