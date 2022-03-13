@@ -11,7 +11,8 @@ import org.jetbrains.annotations.NotNull;
 public class DataEntries implements Iterable<DataEntry> {
 
     private final List<DataEntry> latest;
-    private final List<AverageEntry> averages;
+    private final List<StrippedEntry> averages;
+    private final List<StrippedEntry> max;
     private final List<DataEntry> data;
 
     @NotNull

@@ -5,11 +5,11 @@ import de.femtopedia.database.api.SQLConnection;
 import de.femtopedia.database.api.StatementParametrizer;
 import de.femtopedia.database.mysql.MySQL;
 import de.femtopedia.database.sqlite.SQLite;
-import de.femtopedia.powasysbackend.api.AverageEntry;
 import de.femtopedia.powasysbackend.api.CachedEntry;
 import de.femtopedia.powasysbackend.api.CachedStorage;
 import de.femtopedia.powasysbackend.api.DataEntries;
 import de.femtopedia.powasysbackend.api.DataEntry;
+import de.femtopedia.powasysbackend.api.StrippedEntry;
 import de.femtopedia.powasysbackend.util.Logger;
 import de.femtopedia.powasysbackend.util.Util;
 import java.io.IOException;
@@ -20,9 +20,7 @@ import java.sql.SQLException;
 import java.time.OffsetDateTime;
 import java.util.ArrayList;
 import java.util.Comparator;
-import java.util.HashMap;
 import java.util.List;
-import java.util.Map;
 import java.util.Timer;
 import java.util.TimerTask;
 import java.util.concurrent.CopyOnWriteArrayList;
@@ -91,7 +89,34 @@ public class DatabaseStorage implements CachedStorage {
         checkConnection();
 
         boolean showAll = minDiv <= 0;
-        Map<Integer, DataEntry> current = new HashMap<>();
+
+        List<DataEntry> latest = new ArrayList<>();
+        try (PreparedStatement stmt = getLatestStatement()) {
+            ResultSet rs = stmt.executeQuery();
+
+            while (rs.next()) {
+                latest.add(DataEntry.fromResultSet(rs));
+            }
+        }
+
+        List<StrippedEntry> averages = new ArrayList<>();
+        try (PreparedStatement stmt = average24hStatement()) {
+            ResultSet rs = stmt.executeQuery();
+
+            while (rs.next()) {
+                averages.add(StrippedEntry.fromResultSet(rs));
+            }
+        }
+
+        List<StrippedEntry> max = new ArrayList<>();
+        try (PreparedStatement stmt = max24hStatement()) {
+            ResultSet rs = stmt.executeQuery();
+
+            while (rs.next()) {
+                max.add(StrippedEntry.fromResultSet(rs));
+            }
+        }
+
         List<DataEntry> dataEntries = new ArrayList<>();
         try (PreparedStatement stmt = getLast24hStmt(showAll)) {
             StatementParametrizer parametrizer = new StatementParametrizer(stmt);
@@ -101,25 +126,14 @@ public class DatabaseStorage implements CachedStorage {
             ResultSet rs = parametrizer.toStatement().executeQuery();
 
             while (rs.next()) {
-                DataEntry currentEntry = DataEntry.fromResultSet(rs);
-                dataEntries.add(currentEntry);
-                current.put(currentEntry.getPowadorId(), currentEntry);
-            }
-        }
-
-        Map<Integer, AverageEntry> averages = new HashMap<>();
-        try (PreparedStatement stmt = average24hStatement()) {
-            ResultSet rs = stmt.executeQuery();
-
-            while (rs.next()) {
-                AverageEntry currentAverage = AverageEntry.fromResultSet(rs);
-                averages.put(currentAverage.getPowadorId(), currentAverage);
+                dataEntries.add(DataEntry.fromResultSet(rs));
             }
         }
 
         return new DataEntries(
-                current.values().stream().sorted(Comparator.comparingInt(DataEntry::getPowadorId)).collect(Collectors.toList()),
-                averages.values().stream().sorted(Comparator.comparingInt(AverageEntry::getPowadorId)).collect(Collectors.toList()),
+                latest.stream().sorted(Comparator.comparingInt(DataEntry::getPowadorId)).collect(Collectors.toList()),
+                averages.stream().sorted(Comparator.comparingInt(StrippedEntry::getPowadorId)).collect(Collectors.toList()),
+                max.stream().sorted(Comparator.comparingInt(StrippedEntry::getPowadorId)).collect(Collectors.toList()),
                 dataEntries
         );
     }
@@ -183,8 +197,13 @@ public class DatabaseStorage implements CachedStorage {
     private PreparedStatement getLast24hStmt(boolean showAll) throws SQLException {
         return database.prepareStatement("SELECT * FROM entries "
                 + "WHERE time > DATE_SUB(NOW(), INTERVAL 24 HOUR) "
-                + (showAll ? "" : "GROUP BY powadorId, DATE(time), HOUR(time), FLOOR(MINUTE(time)/?) ")
+                + (showAll ? "" : "GROUP BY powadorId, DATE(time), HOUR(time), MINUTE(time) DIV ? ")
                 + "ORDER BY time;");
+    }
+
+    private PreparedStatement getLatestStatement() throws SQLException {
+        return database.prepareStatement("SELECT * FROM entries WHERE (powadorId,time) IN "
+                + "(SELECT powadorId, MAX(time) FROM entries GROUP BY powadorId);");
     }
 
     private PreparedStatement average24hStatement() throws SQLException {
@@ -192,6 +211,15 @@ public class DatabaseStorage implements CachedStorage {
                 + "AVG(genVoltage) AS genVoltage, AVG(genCurrent) AS genCurrent, AVG(genPower) AS genPower, "
                 + "AVG(netVoltage) AS netVoltage, AVG(netCurrent) AS netCurrent, AVG(netPower) AS netPower, "
                 + "AVG(temperature) AS temperature FROM entries "
+                + "WHERE time > DATE_SUB(NOW(), INTERVAL 24 HOUR) "
+                + "GROUP BY powadorId;");
+    }
+
+    private PreparedStatement max24hStatement() throws SQLException {
+        return database.prepareStatement("SELECT powadorId, "
+                + "MAX(genVoltage) AS genVoltage, MAX(genCurrent) AS genCurrent, MAX(genPower) AS genPower, "
+                + "MAX(netVoltage) AS netVoltage, MAX(netCurrent) AS netCurrent, MAX(netPower) AS netPower, "
+                + "MAX(temperature) AS temperature FROM entries "
                 + "WHERE time > DATE_SUB(NOW(), INTERVAL 24 HOUR) "
                 + "GROUP BY powadorId;");
     }

@@ -10,7 +10,7 @@ import lombok.Data;
 
 @Data
 @AllArgsConstructor
-public class AverageEntry {
+public class StrippedEntry {
 
     public static int DATA_ENTRIES = 7;
     public static double FALLBACK_D = -1D;
@@ -24,8 +24,8 @@ public class AverageEntry {
     private final double netPower;
     private final double temperature;
 
-    public static AverageEntry fromResultSet(ResultSet rs) throws SQLException {
-        return new AverageEntry(
+    public static StrippedEntry fromResultSet(ResultSet rs) throws SQLException {
+        return new StrippedEntry(
                 rs.getInt("powadorId"),
                 rs.getDouble("genVoltage"),
                 rs.getDouble("genCurrent"),
@@ -37,12 +37,12 @@ public class AverageEntry {
         );
     }
 
-    public static AverageEntry fromString(int powadorId, String data) {
+    public static StrippedEntry fromString(int powadorId, String data) {
         String[] split = data.split("\\s+");
         return fromStringData(powadorId, split);
     }
 
-    public static AverageEntry fromStringData(int powadorId, String[] data) {
+    public static StrippedEntry fromStringData(int powadorId, String[] data) {
         if (data.length != DATA_ENTRIES) {
             return null;
         }
@@ -55,7 +55,7 @@ public class AverageEntry {
         double netPower = Util.parseDouble(data[5]).orElse(FALLBACK_D);
         double temperature = Util.parseDouble(data[6]).orElse(FALLBACK_D);
 
-        return new AverageEntry(
+        return new StrippedEntry(
                 powadorId,
                 genVoltage,
                 genCurrent,
