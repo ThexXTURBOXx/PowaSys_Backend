@@ -1,13 +1,13 @@
 package de.femtopedia.powasysbackend.service;
 
 import de.femtopedia.powasysbackend.api.DataEntry;
+import de.femtopedia.powasysbackend.api.RestartablePathReader;
+import de.femtopedia.powasysbackend.api.RestartableReader;
 import de.femtopedia.powasysbackend.api.SerialPort;
 import de.femtopedia.powasysbackend.api.Storage;
 import de.femtopedia.powasysbackend.util.Logger;
 import de.femtopedia.powasysbackend.util.Util;
-import java.io.BufferedReader;
 import java.io.IOException;
-import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.ArrayList;
 import java.util.List;
@@ -35,18 +35,23 @@ public class SerialReader {
     }
 
     public void startListening(int powadorId, Path path) throws IOException {
-        startListening(powadorId, Files.newBufferedReader(path));
+        startListening(powadorId, new RestartablePathReader(path));
     }
 
-    public void startListening(int powadorId, BufferedReader reader) {
+    public void startListening(int powadorId, RestartableReader reader) {
         Thread thread = new Thread(() -> {
             while (running) {
                 String line = null;
 
                 try {
-                    line = reader.readLine();
-                } catch (IOException e) {
-                    LOGGER.error("Error when reading serial port", e);
+                    line = reader.getReader().readLine();
+                } catch (Throwable t) {
+                    LOGGER.error("Error when reading serial port, restarting...", t);
+                    try {
+                        reader.restart();
+                    } catch (Throwable th) {
+                        LOGGER.error("Error when restarting serial reader, this is fatal!", th);
+                    }
                 }
 
                 if (Util.isBlank(line)) {
