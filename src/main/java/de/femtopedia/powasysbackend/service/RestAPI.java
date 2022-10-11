@@ -4,7 +4,7 @@ import de.femtopedia.powasysbackend.api.Powador;
 import de.femtopedia.powasysbackend.api.Storage;
 import de.femtopedia.powasysbackend.util.Util;
 import io.javalin.Javalin;
-import io.javalin.core.JavalinConfig;
+import io.javalin.plugin.bundled.CorsPluginConfig;
 import java.util.List;
 import java.util.Map;
 import lombok.Data;
@@ -28,7 +28,7 @@ public class RestAPI implements AutoCloseable {
     private final List<Powador> powadors;
 
     public RestAPI(Storage storage, List<Powador> powadors) {
-        this(Javalin.create(JavalinConfig::enableCorsForAllOrigins)
+        this(Javalin.create(config -> config.plugins.enableCors(container -> container.add(CorsPluginConfig::anyHost)))
                         .get("/discovery", ctx -> ctx.result(Util.GSON.toJson(endpoints)))
                         .get("/powas", ctx -> ctx.result(Util.GSON.toJson(powadors)))
                         .get("/get/{id}", ctx -> ctx.result(Util.GSON.toJson(
