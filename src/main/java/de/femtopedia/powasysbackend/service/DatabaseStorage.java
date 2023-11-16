@@ -12,6 +12,7 @@ import de.femtopedia.powasysbackend.api.DataEntry;
 import de.femtopedia.powasysbackend.api.StrippedEntry;
 import de.femtopedia.powasysbackend.util.Logger;
 import de.femtopedia.powasysbackend.util.Util;
+import java.io.File;
 import java.io.IOException;
 import java.io.Reader;
 import java.sql.PreparedStatement;
@@ -54,7 +55,7 @@ public class DatabaseStorage implements CachedStorage {
     private List<CachedEntry> queue = new CopyOnWriteArrayList<>();
 
     public DatabaseStorage(String dbLocation) throws SQLException, ClassNotFoundException {
-        this(new SQLite(dbLocation));
+        this(new SQLite(new File(dbLocation)));
     }
 
     public DatabaseStorage(String hostname, String port, String database, String username, String password)
