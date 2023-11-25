@@ -28,7 +28,8 @@ public class RestAPI implements AutoCloseable {
     private final List<Powador> powadors;
 
     public RestAPI(Storage storage, List<Powador> powadors) {
-        this(Javalin.create(config -> config.plugins.enableCors(container -> container.add(CorsPluginConfig::anyHost)))
+        this(Javalin.create(config -> config.bundledPlugins.enableCors(
+                                container -> container.addRule(CorsPluginConfig.CorsRule::anyHost)))
                         .get("/discovery", ctx -> ctx.result(Util.GSON.toJson(endpoints)))
                         .get("/powas", ctx -> ctx.result(Util.GSON.toJson(powadors)))
                         .get("/get/{id}", ctx -> ctx.result(Util.GSON.toJson(
@@ -56,7 +57,7 @@ public class RestAPI implements AutoCloseable {
 
     @Override
     public void close() {
-        javalin.close();
+        javalin.stop();
     }
 
 }
