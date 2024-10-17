@@ -146,6 +146,11 @@ public class DatabaseStorage implements CachedStorage {
 
     @Override
     public void applyChanges() {
+        pushChangesToDb();
+        persistQueue();
+    }
+
+    private void pushChangesToDb() {
         try {
             checkConnection();
         } catch (SQLException e) {
@@ -169,7 +174,9 @@ public class DatabaseStorage implements CachedStorage {
 
         errors.forEach(e ->
                 LOGGER.error("Error when applying changes (" + e.getErrorCode() + "," + e.getSQLState() + ")", e));
+    }
 
+    private void persistQueue() {
         try {
             dumpQueue();
         } catch (IOException e) {
