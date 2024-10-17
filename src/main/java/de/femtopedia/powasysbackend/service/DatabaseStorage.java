@@ -167,7 +167,8 @@ public class DatabaseStorage implements CachedStorage {
             }
         }
 
-        errors.forEach(e -> LOGGER.error("Error when applying changes", e));
+        errors.forEach(e ->
+                LOGGER.error("Error when applying changes (" + e.getErrorCode() + "," + e.getSQLState() + ")", e));
 
         try {
             dumpQueue();
