@@ -197,6 +197,11 @@ public class DatabaseStorage implements CachedStorage {
                 // Should not happen as this has been checked at start already
             }
         }
+        try (ResultSet rs = database.querySQL("/* ping */ SELECT 1")) {
+            rs.next(); // We don't care about any results - we just want to make sure the ping was executed.
+        } catch (SQLException ignored) {
+            // Even if an exception is thrown, the connection should be reinstated now.
+        }
     }
 
     private PreparedStatement getStmt() throws SQLException {
@@ -205,38 +210,44 @@ public class DatabaseStorage implements CachedStorage {
 
     private PreparedStatement getLast24hStmt(boolean showAll) throws SQLException {
         return database.prepareStatement("SELECT * FROM entries "
-                + "WHERE time > DATE_SUB(NOW(), INTERVAL 24 HOUR) "
-                + (showAll ? "" : "GROUP BY powadorId, DATE(time), HOUR(time), MINUTE(time) DIV ? ")
-                + "ORDER BY time;");
+                                         + "WHERE time > DATE_SUB(NOW(), INTERVAL 24 HOUR) "
+                                         + (showAll ? "" : "GROUP BY powadorId, DATE(time), HOUR(time), "
+                                                           + "MINUTE(time) DIV ? ")
+                                         + "ORDER BY time;");
     }
 
     private PreparedStatement getLatestStatement() throws SQLException {
         return database.prepareStatement("SELECT * FROM entries WHERE (powadorId,time) IN "
-                + "(SELECT powadorId, MAX(time) FROM entries GROUP BY powadorId);");
+                                         + "(SELECT powadorId, MAX(time) FROM entries GROUP BY powadorId);");
     }
 
     private PreparedStatement average24hStatement() throws SQLException {
         return database.prepareStatement("SELECT powadorId, "
-                + "AVG(genVoltage) AS genVoltage, AVG(genCurrent) AS genCurrent, AVG(genPower) AS genPower, "
-                + "AVG(netVoltage) AS netVoltage, AVG(netCurrent) AS netCurrent, AVG(netPower) AS netPower, "
-                + "AVG(temperature) AS temperature FROM entries "
-                + "WHERE time > DATE_SUB(NOW(), INTERVAL 24 HOUR) "
-                + "GROUP BY powadorId;");
+                                         + "AVG(genVoltage) AS genVoltage, AVG(genCurrent) AS genCurrent, "
+                                         + "AVG(genPower) AS genPower, AVG(netVoltage) AS netVoltage, "
+                                         + "AVG(netCurrent) AS netCurrent, AVG(netPower) AS netPower, "
+                                         + "AVG(temperature) AS temperature "
+                                         + "FROM entries "
+                                         + "WHERE time > DATE_SUB(NOW(), INTERVAL 24 HOUR) "
+                                         + "GROUP BY powadorId;");
     }
 
     private PreparedStatement max24hStatement() throws SQLException {
         return database.prepareStatement("SELECT powadorId, "
-                + "MAX(genVoltage) AS genVoltage, MAX(genCurrent) AS genCurrent, MAX(genPower) AS genPower, "
-                + "MAX(netVoltage) AS netVoltage, MAX(netCurrent) AS netCurrent, MAX(netPower) AS netPower, "
-                + "MAX(temperature) AS temperature FROM entries "
-                + "WHERE time > DATE_SUB(NOW(), INTERVAL 24 HOUR) "
-                + "GROUP BY powadorId;");
+                                         + "MAX(genVoltage) AS genVoltage, MAX(genCurrent) AS genCurrent, "
+                                         + "MAX(genPower) AS genPower, MAX(netVoltage) AS netVoltage, "
+                                         + "MAX(netCurrent) AS netCurrent, MAX(netPower) AS netPower, "
+                                         + "MAX(temperature) AS temperature "
+                                         + "FROM entries "
+                                         + "WHERE time > DATE_SUB(NOW(), INTERVAL 24 HOUR) "
+                                         + "GROUP BY powadorId;");
     }
 
     private PreparedStatement insertStmt() throws SQLException {
         return database.prepareStatement("INSERT INTO entries("
-                + "time,powadorId,state,genVoltage,genCurrent,genPower,netVoltage,netCurrent,netPower,temperature) "
-                + "VALUES(DATE_SUB(NOW(), INTERVAL ? DAY_SECOND),?,?,?,?,?,?,?,?,?);");
+                                         + "time,powadorId,state,genVoltage,genCurrent,genPower,netVoltage,"
+                                         + "netCurrent,netPower,temperature) "
+                                         + "VALUES(DATE_SUB(NOW(), INTERVAL ? DAY_SECOND),?,?,?,?,?,?,?,?,?);");
     }
 
     @Override
