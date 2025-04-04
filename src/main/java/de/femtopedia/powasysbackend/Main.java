@@ -58,7 +58,7 @@ public final class Main {
         }
 
         try {
-            storage = new DatabaseStorage(config.getMySQL());
+            storage = new DatabaseStorage(config.mySQL());
         } catch (SQLException | ClassNotFoundException e) {
             LOGGER.error("Error initializing storage", e);
             return false;
@@ -70,11 +70,11 @@ public final class Main {
             LOGGER.error("Error reading queue file", e);
         }
 
-        restAPI = new RestAPI(storage, config.getPowadors()).start(config.getRestApiPort());
+        restAPI = new RestAPI(storage, config.powadors()).start(config.restApiPort());
 
         serialReader = new SerialReader(storage);
 
-        for (SerialPort serialPort : config.getSerialPorts()) {
+        for (SerialPort serialPort : config.serialPorts()) {
             try {
                 serialReader.startListening(serialPort);
             } catch (IOException e) {

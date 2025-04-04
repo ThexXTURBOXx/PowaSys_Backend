@@ -7,12 +7,9 @@ import io.javalin.Javalin;
 import io.javalin.plugin.bundled.CorsPluginConfig;
 import java.util.List;
 import java.util.Map;
-import lombok.Data;
-import lombok.RequiredArgsConstructor;
 
-@Data
-@RequiredArgsConstructor
-public class RestAPI implements AutoCloseable {
+public record RestAPI(Javalin javalin, Storage storage, List<Powador> powadors)
+        implements AutoCloseable {
 
     private static final Map<String, String> endpoints = Map.ofEntries(
             Map.entry("GET /discovery", "Shows this page, which contains information about all available endpoints."),
@@ -20,12 +17,6 @@ public class RestAPI implements AutoCloseable {
             Map.entry("GET /get/{id}", "Returns the entry with the given {id} from the database."),
             Map.entry("GET /24h", "Returns all entries from within the last 24 hours from the database.")
     );
-
-    private final Javalin javalin;
-
-    private final Storage storage;
-
-    private final List<Powador> powadors;
 
     public RestAPI(Storage storage, List<Powador> powadors) {
         this(Javalin.create(config -> config.bundledPlugins.enableCors(

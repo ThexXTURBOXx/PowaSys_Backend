@@ -5,28 +5,13 @@ import de.femtopedia.powasysbackend.util.Util;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
-import lombok.AllArgsConstructor;
-import lombok.Data;
 
-@Data
-@AllArgsConstructor
-public class DataEntry {
+public record DataEntry(int powadorId, String unused, String time, int state, double genVoltage, double genCurrent,
+                        int genPower, double netVoltage, double netCurrent, int netPower, int temperature) {
 
     public static int DATA_ENTRIES = 10;
     public static int FALLBACK = -1;
     public static double FALLBACK_D = -1D;
-
-    private final int powadorId;
-    private final String unused;
-    private final String time;
-    private final int state;
-    private final double genVoltage;
-    private final double genCurrent;
-    private final int genPower;
-    private final double netVoltage;
-    private final double netCurrent;
-    private final int netPower;
-    private final int temperature;
 
     public static DataEntry fromResultSet(ResultSet rs) throws SQLException {
         return new DataEntry(

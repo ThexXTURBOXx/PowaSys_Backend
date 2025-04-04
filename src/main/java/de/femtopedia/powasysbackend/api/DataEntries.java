@@ -2,18 +2,10 @@ package de.femtopedia.powasysbackend.api;
 
 import java.util.Iterator;
 import java.util.List;
-import lombok.AllArgsConstructor;
-import lombok.Data;
 import org.jetbrains.annotations.NotNull;
 
-@Data
-@AllArgsConstructor
-public class DataEntries implements Iterable<DataEntry> {
-
-    private final List<DataEntry> latest;
-    private final List<StrippedEntry> averages;
-    private final List<StrippedEntry> max;
-    private final List<DataEntry> data;
+public record DataEntries(List<DataEntry> latest, List<StrippedEntry> averages, List<StrippedEntry> max,
+                          List<DataEntry> data) implements Iterable<DataEntry> {
 
     @NotNull
     @Override

@@ -6,19 +6,11 @@ import de.femtopedia.powasysbackend.api.DataEntry;
 import java.io.BufferedReader;
 import java.io.IOException;
 import java.util.Locale;
-import lombok.Data;
-import lombok.RequiredArgsConstructor;
 
 /**
  * Utility class for managing the user interaction.
  */
-@Data
-@RequiredArgsConstructor
-public class REPL {
-
-    private final BufferedReader reader;
-
-    private final CachedStorage storage;
+public record REPL(BufferedReader reader, CachedStorage storage) {
 
     /**
      * Initializes and starts the REPL Shell and waits for user input to
@@ -48,32 +40,32 @@ public class REPL {
      *
      * @param input The command.
      * @return {@code true} iff the program should shut down, {@code false}
-     *         otherwise.
+     * otherwise.
      */
     private boolean execute(String input) {
         switch (input) {
-        case "a":
-        case "add":
-            addDebugData();
-            break;
-        case "c":
-        case "clear":
-            clearQueue();
-            break;
-        case "p":
-        case "print":
-            printQueue();
-            break;
-        case "h":
-        case "help":
-            printHelp();
-            break;
-        case "q":
-        case "quit":
-            return true;
-        default:
-            System.err.println(ERR_CMD_NOT_EXISTS);
-            break;
+            case "a":
+            case "add":
+                addDebugData();
+                break;
+            case "c":
+            case "clear":
+                clearQueue();
+                break;
+            case "p":
+            case "print":
+                printQueue();
+                break;
+            case "h":
+            case "help":
+                printHelp();
+                break;
+            case "q":
+            case "quit":
+                return true;
+            default:
+                System.err.println(ERR_CMD_NOT_EXISTS);
+                break;
         }
         return false;
     }
@@ -118,19 +110,20 @@ public class REPL {
         System.out.printf(INFO_HELP_TEXT);
     }
 
-    private static final String ERR_CMD_NOT_EXISTS = "Command doesn't exist! "
-            + "For more info, type HELP.";
+    private static final String ERR_CMD_NOT_EXISTS =
+            "Command doesn't exist! For more info, type HELP.";
 
     private static final String ERR_ONLY_DEV_CMD = "This command is only available in a Dev Environment!";
 
-    private static final String INFO_HELP_TEXT = ""
-            + "HELP      Prints this text.%n"
-            + "CLEAR     Clears the current queue.%n"
-            + "PRINT     Prints the current queue.%n"
-            + "QUIT      Quits this software.%n"
-            + "%n"
-            + "Summary:%n"
-            + "This program provides useful commands for debugging%n"
-            + "the PowaSys Backend software.%n";
+    private static final String INFO_HELP_TEXT = """
+            HELP      Prints this text.
+            CLEAR     Clears the current queue.
+            PRINT     Prints the current queue.
+            QUIT      Quits this software.
+            
+            Summary:
+            This program provides useful commands for debugging
+            the PowaSys Backend software.
+            """;
 
 }

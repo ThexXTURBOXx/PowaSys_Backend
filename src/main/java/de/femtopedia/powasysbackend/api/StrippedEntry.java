@@ -5,24 +5,12 @@ import de.femtopedia.powasysbackend.util.Util;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
-import lombok.AllArgsConstructor;
-import lombok.Data;
 
-@Data
-@AllArgsConstructor
-public class StrippedEntry {
+public record StrippedEntry(int powadorId, double genVoltage, double genCurrent, double genPower, double netVoltage,
+                            double netCurrent, double netPower, double temperature) {
 
     public static int DATA_ENTRIES = 7;
     public static double FALLBACK_D = -1D;
-
-    private final int powadorId;
-    private final double genVoltage;
-    private final double genCurrent;
-    private final double genPower;
-    private final double netVoltage;
-    private final double netCurrent;
-    private final double netPower;
-    private final double temperature;
 
     public static StrippedEntry fromResultSet(ResultSet rs) throws SQLException {
         return new StrippedEntry(

@@ -11,23 +11,18 @@ import java.io.IOException;
 import java.nio.file.Path;
 import java.util.ArrayList;
 import java.util.List;
-import lombok.Data;
-import lombok.RequiredArgsConstructor;
+import java.util.concurrent.atomic.AtomicBoolean;
 
-@Data
-@RequiredArgsConstructor
-public class SerialReader {
+public record SerialReader(Storage storage, List<Thread> threads, AtomicBoolean running) {
 
     private static final Logger LOGGER = Logger.forClass(SerialReader.class);
 
-    private final Storage storage;
-
-    private final List<Thread> threads = new ArrayList<>();
-
-    private volatile boolean running = true;
+    public SerialReader(Storage storage) {
+        this(storage, new ArrayList<>(), new AtomicBoolean(true));
+    }
 
     public void startListening(SerialPort serialPort) throws IOException {
-        startListening(serialPort.getPowadorId(), serialPort.getSerialPort());
+        startListening(serialPort.powadorId(), serialPort.serialPort());
     }
 
     public void startListening(int powadorId, String serialPort) throws IOException {
@@ -40,7 +35,7 @@ public class SerialReader {
 
     public void startListening(int powadorId, RestartableReader reader) {
         Thread thread = new Thread(() -> {
-            while (running) {
+            while (running.get()) {
                 String line = null;
 
                 try {
@@ -77,11 +72,11 @@ public class SerialReader {
     }
 
     public void close() {
-        running = false;
+        running.set(false);
 
         threads.forEach(t -> {
             try {
-                t.stop();
+                t.interrupt();
                 t.join();
             } catch (InterruptedException e) {
                 LOGGER.error("Error when stopping serial reader", e);

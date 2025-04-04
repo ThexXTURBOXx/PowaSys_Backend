@@ -8,20 +8,8 @@ import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.List;
-import lombok.Data;
-import lombok.RequiredArgsConstructor;
 
-@Data
-@RequiredArgsConstructor
-public class Config {
-
-    private final MySQL mySQL;
-
-    private final int restApiPort;
-
-    private final List<Powador> powadors;
-
-    private final List<SerialPort> serialPorts;
+public record Config(MySQL mySQL, int restApiPort, List<Powador> powadors, List<SerialPort> serialPorts) {
 
     public Config() {
         this(new MySQL("<hostname>", "<port>", "<database>", "<username>", "<password>"),

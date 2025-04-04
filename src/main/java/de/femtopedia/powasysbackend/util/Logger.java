@@ -7,7 +7,7 @@ import java.util.logging.Level;
 /**
  * Facade for a logging API. Currently: {@link java.util.logging}.
  */
-public final class Logger {
+public record Logger(java.util.logging.Logger logger) {
 
     /**
      * The depth of method calls starting from the client until reaching {@link #log(Level, String, Throwable)}.
@@ -20,17 +20,12 @@ public final class Logger {
     private static final Map<String, Logger> logMap = new HashMap<>();
 
     /**
-     * {@link java.util.logging.Logger} proxied by this instance.
-     */
-    private final java.util.logging.Logger logger;
-
-    /**
      * Constructs a new Log proxying a logger for the given class.
      *
      * @param name Fully-qualified name of the class the new Log is associated with.
      */
     private Logger(String name) {
-        logger = java.util.logging.Logger.getLogger(name);
+        this(java.util.logging.Logger.getLogger(name));
     }
 
     /**
