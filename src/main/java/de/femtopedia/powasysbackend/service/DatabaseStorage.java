@@ -54,6 +54,8 @@ public class DatabaseStorage implements CachedStorage {
 
     private List<CachedEntry> queue = new CopyOnWriteArrayList<>();
 
+    private boolean queueWasEmpty = false;
+
     public DatabaseStorage(String dbLocation) throws SQLException, ClassNotFoundException {
         this(new SQLite(new File(dbLocation)));
     }
@@ -260,6 +262,10 @@ public class DatabaseStorage implements CachedStorage {
 
     @Override
     public void dumpQueue(Appendable writer) {
+        if (queue.isEmpty()) {
+            if (queueWasEmpty) return;
+            queueWasEmpty = true;
+        }
         Util.GSON.toJson(queue, writer);
     }
 
