@@ -18,6 +18,12 @@ public interface CachedStorage extends Storage {
 
     void clearQueue();
 
+    boolean isQueueEmpty();
+
+    void setQueueWasEmpty(boolean queueWasEmpty);
+
+    boolean wasQueueEmpty();
+
     default void loadQueue() throws IOException {
         createQueueFile();
         try (BufferedReader br = Files.newBufferedReader(DEFAULT_QUEUE_FILE)) {
@@ -28,6 +34,8 @@ public interface CachedStorage extends Storage {
     void loadQueue(Reader reader);
 
     default void dumpQueue() throws IOException {
+        if (isQueueEmpty() && wasQueueEmpty()) return;
+        setQueueWasEmpty(isQueueEmpty());
         createQueueFile();
         try (BufferedWriter bw = Files.newBufferedWriter(DEFAULT_QUEUE_FILE)) {
             dumpQueue(bw);

@@ -53,9 +53,9 @@ public class DatabaseStorage implements CachedStorage {
         timer.schedule(applyTask, 10000, 10000);
     }
 
-    private List<CachedEntry> queue = new CopyOnWriteArrayList<>();
+    private final AtomicBoolean queueWasEmpty = new AtomicBoolean(false);
 
-    private AtomicBoolean queueWasEmpty = new AtomicBoolean(false);
+    private List<CachedEntry> queue = new CopyOnWriteArrayList<>();
 
     public DatabaseStorage(String dbLocation) throws SQLException, ClassNotFoundException {
         this(new SQLite(new File(dbLocation)));
@@ -192,6 +192,21 @@ public class DatabaseStorage implements CachedStorage {
         queue.clear();
     }
 
+    @Override
+    public boolean isQueueEmpty() {
+        return queue.isEmpty();
+    }
+
+    @Override
+    public void setQueueWasEmpty(boolean queueWasEmpty) {
+        this.queueWasEmpty.set(queueWasEmpty);
+    }
+
+    @Override
+    public boolean wasQueueEmpty() {
+        return queueWasEmpty.get();
+    }
+
     private void checkConnection() throws SQLException {
         if (!database.isConnected()) {
             try {
@@ -263,8 +278,6 @@ public class DatabaseStorage implements CachedStorage {
 
     @Override
     public void dumpQueue(Appendable writer) {
-        if (queue.isEmpty() && queueWasEmpty.get()) return;
-        queueWasEmpty.set(queue.isEmpty());
         Util.GSON.toJson(queue, writer);
     }
 
