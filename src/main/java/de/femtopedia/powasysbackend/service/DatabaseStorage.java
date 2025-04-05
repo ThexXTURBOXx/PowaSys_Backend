@@ -25,6 +25,7 @@ import java.util.List;
 import java.util.Timer;
 import java.util.TimerTask;
 import java.util.concurrent.CopyOnWriteArrayList;
+import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.stream.Collectors;
 import lombok.Data;
 import lombok.RequiredArgsConstructor;
@@ -54,7 +55,7 @@ public class DatabaseStorage implements CachedStorage {
 
     private List<CachedEntry> queue = new CopyOnWriteArrayList<>();
 
-    private boolean queueWasEmpty = false;
+    private AtomicBoolean queueWasEmpty = new AtomicBoolean(false);
 
     public DatabaseStorage(String dbLocation) throws SQLException, ClassNotFoundException {
         this(new SQLite(new File(dbLocation)));
@@ -262,10 +263,8 @@ public class DatabaseStorage implements CachedStorage {
 
     @Override
     public void dumpQueue(Appendable writer) {
-        if (queue.isEmpty()) {
-            if (queueWasEmpty) return;
-            queueWasEmpty = true;
-        }
+        if (queue.isEmpty() && queueWasEmpty.get()) return;
+        queueWasEmpty.set(queue.isEmpty());
         Util.GSON.toJson(queue, writer);
     }
 
