@@ -70,7 +70,9 @@ public final class Main {
             LOGGER.error("Error reading queue file", e);
         }
 
-        restAPI = new RestAPI(storage, config.powadors()).start(config.restApiPort());
+        int restAPIPort = config.restApiPort();
+        if (restAPIPort > 0)
+            restAPI = new RestAPI(storage, config.powadors()).start(restAPIPort);
 
         serialReader = new SerialReader(storage);
 
