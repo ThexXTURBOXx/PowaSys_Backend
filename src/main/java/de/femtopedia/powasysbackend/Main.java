@@ -45,6 +45,8 @@ public final class Main {
     }
 
     private static boolean init() {
+        LOGGER.info("Initializing PowaSys Backend " + (IS_DEV_ENV ? "DEV" : VERSION) + "...");
+
         try {
             config = Config.readOrInit(Path.of("config.json"));
         } catch (IOException e) {
