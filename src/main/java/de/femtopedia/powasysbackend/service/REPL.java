@@ -40,32 +40,32 @@ public record REPL(BufferedReader reader, CachedStorage storage) {
      *
      * @param input The command.
      * @return {@code true} iff the program should shut down, {@code false}
-     * otherwise.
+     *         otherwise.
      */
     private boolean execute(String input) {
         switch (input) {
-            case "a":
-            case "add":
-                addDebugData();
-                break;
-            case "c":
-            case "clear":
-                clearQueue();
-                break;
-            case "p":
-            case "print":
-                printQueue();
-                break;
-            case "h":
-            case "help":
-                printHelp();
-                break;
-            case "q":
-            case "quit":
-                return true;
-            default:
-                System.err.println(ERR_CMD_NOT_EXISTS);
-                break;
+        case "a":
+        case "add":
+            addDebugData();
+            break;
+        case "c":
+        case "clear":
+            clearQueue();
+            break;
+        case "p":
+        case "print":
+            printQueue();
+            break;
+        case "h":
+        case "help":
+            printHelp();
+            break;
+        case "q":
+        case "quit":
+            return true;
+        default:
+            System.err.println(ERR_CMD_NOT_EXISTS);
+            break;
         }
         return false;
     }
