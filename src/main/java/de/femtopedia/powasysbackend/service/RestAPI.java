@@ -19,15 +19,16 @@ public record RestAPI(Javalin javalin, Storage storage, List<Powador> powadors)
     );
 
     public RestAPI(Storage storage, List<Powador> powadors) {
-        this(Javalin.create(config -> config.bundledPlugins.enableCors(
-                                container -> container.addRule(CorsPluginConfig.CorsRule::anyHost)))
-                        .get("/discovery", ctx -> ctx.result(Util.GSON.toJson(endpoints)))
-                        .get("/powas", ctx -> ctx.result(Util.GSON.toJson(powadors)))
-                        .get("/get/{id}", ctx -> ctx.result(Util.GSON.toJson(
-                                storage.getEntry(ctx.pathParamAsClass("id", Integer.class).get()))))
-                        .get("/24h", ctx -> ctx.result(Util.GSON.toJson(storage.getLast24h(
-                                ctx.queryParamAsClass("minDiv", Double.class).getOrDefault(0.0)
-                        )))),
+        this(Javalin.create(config -> {
+                    config.bundledPlugins.enableCors(
+                            container -> container.addRule(CorsPluginConfig.CorsRule::anyHost));
+                    config.routes.get("/discovery", ctx -> ctx.result(Util.GSON.toJson(endpoints)))
+                            .get("/powas", ctx -> ctx.result(Util.GSON.toJson(powadors)))
+                            .get("/get/{id}", ctx -> ctx.result(Util.GSON.toJson(
+                                    storage.getEntry(ctx.pathParamAsClass("id", Integer.class).get()))))
+                            .get("/24h", ctx -> ctx.result(Util.GSON.toJson(storage.getLast24h(
+                                    ctx.queryParamAsClass("minDiv", Double.class).getOrDefault(0.0)))));
+                }),
                 storage, powadors);
     }
 
