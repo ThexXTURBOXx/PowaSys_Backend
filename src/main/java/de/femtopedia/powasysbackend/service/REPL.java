@@ -3,6 +3,7 @@ package de.femtopedia.powasysbackend.service;
 import de.femtopedia.powasysbackend.Main;
 import de.femtopedia.powasysbackend.api.CachedStorage;
 import de.femtopedia.powasysbackend.api.DataEntry;
+import de.femtopedia.powasysbackend.util.Logger;
 import java.io.BufferedReader;
 import java.io.IOException;
 import java.util.Locale;
@@ -11,6 +12,8 @@ import java.util.Locale;
  * Utility class for managing the user interaction.
  */
 public record REPL(BufferedReader reader, CachedStorage storage) {
+
+    private static final Logger LOGGER = Logger.forClass(REPL.class);
 
     /**
      * Initializes and starts the REPL Shell and waits for user input to
@@ -81,8 +84,8 @@ public record REPL(BufferedReader reader, CachedStorage storage) {
 
         try {
             storage.store(new DataEntry(3, "", "", 4, 45.3, 54.2, 43, 54.6, 89.5, 10, 36));
-        } catch (Exception e) {
-            e.printStackTrace();
+        } catch (Throwable t) {
+            LOGGER.error("Could not store debug data entry!", t);
         }
     }
 
