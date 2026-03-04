@@ -25,7 +25,6 @@ import java.util.List;
 import java.util.Timer;
 import java.util.TimerTask;
 import java.util.concurrent.CopyOnWriteArrayList;
-import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.stream.Collectors;
 import lombok.Data;
 import lombok.RequiredArgsConstructor;
@@ -53,7 +52,7 @@ public class DatabaseStorage implements CachedStorage {
         timer.schedule(applyTask, 10000, 10000);
     }
 
-    private final AtomicBoolean queueWasEmpty = new AtomicBoolean(false);
+    private volatile boolean queueWasEmpty = false;
 
     private List<CachedEntry> queue = new CopyOnWriteArrayList<>();
 
@@ -199,12 +198,12 @@ public class DatabaseStorage implements CachedStorage {
 
     @Override
     public void setQueueWasEmpty(boolean queueWasEmpty) {
-        this.queueWasEmpty.set(queueWasEmpty);
+        this.queueWasEmpty = queueWasEmpty;
     }
 
     @Override
     public boolean wasQueueEmpty() {
-        return queueWasEmpty.get();
+        return queueWasEmpty;
     }
 
     private void checkConnection() throws SQLException {
