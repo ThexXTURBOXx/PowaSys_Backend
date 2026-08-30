@@ -32,7 +32,7 @@ public final class Main {
 
     private static REPL repl;
 
-    public static void main(String[] args) {
+    static void main() {
         if (!init()) {
             System.err.println("Error occurred when initializing PowaSys Backend! Stopping...");
             shutdown();
